@@ -1,0 +1,8 @@
+[package]
+name = "dddinrust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+thiserror = "2.0.18"
+uuid = { version = "1.23.2", features = ["serde", "v4"] }
