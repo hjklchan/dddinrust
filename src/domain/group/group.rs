@@ -1,14 +1,20 @@
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::domain::group::group::GroupError::EmptyName;
+use crate::domain::{
+    group::group::GroupError::EmptyName,
+    group_member::{GroupMember, MemberRole},
+};
 
 #[derive(Debug)]
 pub struct Group {
     id: Uuid,
+    // 群主 Id
+    owner_id: Uuid,
 
     name: String,
     description: Option<String>,
+    members: Vec<GroupMember>,
 
     created_time: chrono::DateTime<Utc>,
 }
@@ -17,25 +23,159 @@ pub struct Group {
 pub enum GroupError {
     #[error("group name cannot be empty")]
     EmptyName,
+    #[error("group member not found")]
+    GroupMemberNotFound,
+    #[error("forbidden: {0}")]
+    Forbidden(String),
 }
 
 impl Group {
-    pub fn new(name: String, description: Option<String>) -> Result<Group, GroupError> {
+    pub fn new(
+        owner_id: Uuid,
+        name: String,
+        description: Option<String>,
+    ) -> Result<Group, GroupError> {
         if name.is_empty() {
             return Err(EmptyName);
         }
 
         let now = Utc::now();
 
-        Ok(Group {
+        let mut new_group = Group {
             id: Uuid::new_v4(),
+            owner_id,
             name,
             description,
+            members: Default::default(),
             created_time: now,
-        })
+        };
+        // 默认添加房主 Member
+        let administrator = GroupMember::new(
+            owner_id,
+            "Host".to_string(),
+            crate::domain::group_member::MemberRole::Administrator,
+        );
+        new_group.members.push(administrator);
+
+        Ok(new_group)
     }
 }
 
+// Actions
+impl Group {
+    pub fn add_member(&mut self, member: GroupMember) -> Result<(), ()> {
+        self.members.push(member);
+
+        Ok(())
+    }
+
+    pub fn invite_member(&mut self, member: GroupMember) -> Result<(), ()> {
+        // TODO - 任意角色的群成员都可以邀请人
+        // TODO - 只有群主邀请（当前）
+        self.members.push(member);
+        // TODO 记录日志
+
+        Ok(())
+    }
+
+    pub fn kick_member(&mut self, operator_id: Uuid, member_id: Uuid) -> Result<(), GroupError> {
+        // find operator
+        let operator = self
+            .members
+            .iter()
+            .find(|gm| {
+                return gm.user_id() == operator_id;
+            })
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        // check role
+        // only administrator can do
+        if !operator.can_remove_member() {
+            return Err(GroupError::Forbidden(
+                "you're not group administrator".to_owned(),
+            ));
+        }
+
+        // find member
+        let member_idx = self
+            .members
+            .iter()
+            .position(|gm| {
+                return gm.user_id() == member_id;
+            })
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        // kick out
+        self.members.remove(member_idx);
+
+        Ok(())
+    }
+
+    pub fn mute_member(&mut self, operator_id: Uuid, member_id: Uuid) -> Result<(), GroupError> {
+        // find operator
+        let operator = self
+            .members
+            .iter()
+            .find(|gm| gm.user_id() == operator_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        // check role
+        if operator.role() != MemberRole::Administrator || operator.role() != MemberRole::Manager {
+            return Err(GroupError::Forbidden(
+                "you're not group administrator or group manger".to_owned(),
+            ));
+        }
+
+        // find member
+        let member = self
+            .members
+            .iter_mut()
+            .find(|gm| gm.user_id() == member_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        // do mute
+        member.apply_mute();
+
+        Ok(())
+    }
+
+    // TODO
+    pub fn unmute_member(&mut self, operator_id: Uuid, member_id: Uuid) -> () {}
+
+    pub fn upgrade_to_manager(
+        &mut self,
+        operator_id: Uuid,
+        member_id: Uuid,
+    ) -> Result<(), GroupError> {
+        let operator = self
+            .members
+            .iter()
+            .find(|gm| gm.user_id() == operator_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        // check role
+        if !operator.role().is_administrator() {
+            return Err(GroupError::Forbidden(
+                "you're not administrator in group".to_owned(),
+            ));
+        }
+
+        // find member
+        let member = self
+            .members
+            .iter_mut()
+            .find(|gm| gm.user_id() == member_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        member
+            .upgrade_to_manager()
+            .map_err(|err| GroupError::Forbidden(err.to_string()))?;
+
+        Ok(())
+    }
+}
+
+// Getters
 impl Group {
     pub fn id(&self) -> Uuid {
         self.id
@@ -51,5 +191,9 @@ impl Group {
 
     pub fn created_time(&self) -> chrono::DateTime<Utc> {
         self.created_time
+    }
+
+    pub fn count_of_members<T>(&self) -> usize {
+        self.members.len()
     }
 }
