@@ -72,8 +72,20 @@ impl GroupMember {
         self.status = self.status.recover()
     }
 
-    pub(crate) fn upgrade_to_manager(&mut self) -> Result<(), &'static str> {
-        self.role = self.role.upgrade_to_manager()?;
+    pub(crate) fn promote_to_manager(&mut self) -> Result<(), &'static str> {
+        self.role = self.role.change_to_manager()?;
+
+        Ok(())
+    }
+
+    pub(crate) fn demote_to_member(&mut self) -> Result<(), &'static str> {
+        self.role = self.role.change_to_member()?;
+
+        Ok(())
+    }
+
+    pub(crate) fn transfer_administrator(&mut self) -> Result<(), &'static str> {
+        self.role = self.role().change_to_administrator()?;
 
         Ok(())
     }

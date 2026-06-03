@@ -27,6 +27,8 @@ pub enum GroupError {
     GroupMemberNotFound,
     #[error("forbidden: {0}")]
     Forbidden(String),
+    #[error("{0}")]
+    DisallowOperation(String),
 }
 
 impl Group {
@@ -142,7 +144,7 @@ impl Group {
     // TODO
     pub fn unmute_member(&mut self, operator_id: Uuid, member_id: Uuid) -> () {}
 
-    pub fn upgrade_to_manager(
+    pub fn promote_to_manager(
         &mut self,
         operator_id: Uuid,
         member_id: Uuid,
@@ -168,8 +170,76 @@ impl Group {
             .ok_or(GroupError::GroupMemberNotFound)?;
 
         member
-            .upgrade_to_manager()
+            .promote_to_manager()
             .map_err(|err| GroupError::Forbidden(err.to_string()))?;
+
+        Ok(())
+    }
+
+    pub fn demote_to_member(
+        &mut self,
+        operator_id: Uuid,
+        member_id: Uuid,
+    ) -> Result<(), GroupError> {
+        let operator = self
+            .members
+            .iter()
+            .find(|gm| gm.user_id() == operator_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        // check role
+        if !operator.role().is_administrator() {
+            return Err(GroupError::Forbidden(
+                "you're not administrator in group".to_owned(),
+            ));
+        }
+
+        // find member
+        let member = self
+            .members
+            .iter_mut()
+            .find(|gm| gm.user_id() == member_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        member
+            .demote_to_member()
+            .map_err(|err| GroupError::Forbidden(err.to_string()))?;
+
+        Ok(())
+    }
+
+    pub fn transfer_administrator(
+        &mut self,
+        operator_id: Uuid,
+        member_id: Uuid,
+    ) -> Result<(), GroupError> {
+        let operator = self
+            .members
+            .iter_mut()
+            .find(|gm| gm.user_id() == operator_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        // check role
+        if !operator.role().is_administrator() {
+            return Err(GroupError::Forbidden(
+                "you're not administrator in group".to_owned(),
+            ));
+        }
+
+        operator
+            .demote_to_member()
+            .map_err(|err| GroupError::Forbidden(err.to_string()))?;
+
+        // find member
+        let member = self
+            .members
+            .iter_mut()
+            .find(|gm| gm.user_id() == member_id)
+            .ok_or(GroupError::GroupMemberNotFound)?;
+
+        member
+            .transfer_administrator()
+            .map_err(|err| GroupError::DisallowOperation(err.into()))?;
 
         Ok(())
     }
