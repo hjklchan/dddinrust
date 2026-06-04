@@ -55,4 +55,8 @@ impl User {
     pub fn update_date_of_birth(&mut self, value: chrono::DateTime<Utc>) {
         self.date_of_birth = Some(value)
     }
+
+    pub fn update_nickname(&mut self) {
+        // todo
+    }
 }
