@@ -31,6 +31,7 @@ impl DateOfBirth {
 
         years >= 18
     }
+}
 
 #[cfg(test)]
 mod tests {
