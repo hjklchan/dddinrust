@@ -22,12 +22,14 @@ impl From<chrono::DateTime<Utc>> for DateOfBirth {
 impl DateOfBirth {
     pub fn is_adult(&self) -> bool {
         let now = Utc::now();
-        let mut years = now.sub(self.value).num_days() / 365;
+        let mut years = now.year() - self.value.year();
 
         println!("{} {}", now.month(), self.value.month());
-        if now.day() < self.value.day() {
+        // TODO check month
+        if true || now.day() < self.value.day() {
             years -= 1;
         }
+        println!("{}", years);
 
         years >= 18
     }
@@ -41,7 +43,7 @@ mod tests {
 
     #[test]
     fn test_is_adult() {
-        let dt = Utc.with_ymd_and_hms(1999, 6, 5, 0, 0, 0).unwrap();
+        let dt = Utc.with_ymd_and_hms(1999, 7, 3, 0, 0, 0).unwrap();
         let date_of_birth = DateOfBirth::from(dt);
 
         date_of_birth.is_adult();
