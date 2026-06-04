@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use chrono::Utc;
 use uuid::Uuid;
 
@@ -82,13 +84,7 @@ impl Group {
 
     pub fn kick_member(&mut self, operator_id: Uuid, member_id: Uuid) -> Result<(), GroupError> {
         // find operator
-        let operator = self
-            .members
-            .iter()
-            .find(|gm| {
-                return gm.user_id() == operator_id;
-            })
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let operator = self.find_member(operator_id)?;
 
         // check role
         // only administrator can do
@@ -115,11 +111,7 @@ impl Group {
 
     pub fn mute_member(&mut self, operator_id: Uuid, member_id: Uuid) -> Result<(), GroupError> {
         // find operator
-        let operator = self
-            .members
-            .iter()
-            .find(|gm| gm.user_id() == operator_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let operator = self.find_member(operator_id)?;
 
         // check role
         if operator.role() != MemberRole::Administrator || operator.role() != MemberRole::Manager {
@@ -129,11 +121,7 @@ impl Group {
         }
 
         // find member
-        let member = self
-            .members
-            .iter_mut()
-            .find(|gm| gm.user_id() == member_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let member = self.find_member(member_id)?;
 
         // do mute
         member.apply_mute();
@@ -149,11 +137,7 @@ impl Group {
         operator_id: Uuid,
         member_id: Uuid,
     ) -> Result<(), GroupError> {
-        let operator = self
-            .members
-            .iter()
-            .find(|gm| gm.user_id() == operator_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let operator = self.find_member(operator_id)?;
 
         // check role
         if !operator.role().is_administrator() {
@@ -163,11 +147,7 @@ impl Group {
         }
 
         // find member
-        let member = self
-            .members
-            .iter_mut()
-            .find(|gm| gm.user_id() == member_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let member = self.find_member(member_id)?;
 
         member
             .promote_to_manager()
@@ -181,11 +161,7 @@ impl Group {
         operator_id: Uuid,
         member_id: Uuid,
     ) -> Result<(), GroupError> {
-        let operator = self
-            .members
-            .iter()
-            .find(|gm| gm.user_id() == operator_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let operator = self.find_member(operator_id)?;
 
         // check role
         if !operator.role().is_administrator() {
@@ -195,11 +171,7 @@ impl Group {
         }
 
         // find member
-        let member = self
-            .members
-            .iter_mut()
-            .find(|gm| gm.user_id() == member_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let member = self.find_member(member_id)?;
 
         member
             .demote_to_member()
@@ -213,11 +185,7 @@ impl Group {
         operator_id: Uuid,
         member_id: Uuid,
     ) -> Result<(), GroupError> {
-        let operator = self
-            .members
-            .iter_mut()
-            .find(|gm| gm.user_id() == operator_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let operator = self.find_member(operator_id)?;
 
         // check role
         if !operator.role().is_administrator() {
@@ -231,17 +199,20 @@ impl Group {
             .map_err(|err| GroupError::Forbidden(err.to_string()))?;
 
         // find member
-        let member = self
-            .members
-            .iter_mut()
-            .find(|gm| gm.user_id() == member_id)
-            .ok_or(GroupError::GroupMemberNotFound)?;
+        let member = self.find_member(member_id)?;
 
         member
             .transfer_administrator()
             .map_err(|err| GroupError::DisallowOperation(err.into()))?;
 
         Ok(())
+    }
+
+    fn find_member(&mut self, member_id: Uuid) -> Result<&mut GroupMember, GroupError> {
+        self.members
+            .iter_mut()
+            .find(|gm| gm.user_id() == member_id)
+            .ok_or(GroupError::GroupMemberNotFound)
     }
 }
 
@@ -263,7 +234,11 @@ impl Group {
         self.created_time
     }
 
-    pub fn count_of_members<T>(&self) -> usize {
+    pub fn count_of_members(&self) -> usize {
         self.members.len()
+    }
+
+    pub fn group_owner(&self) -> Result<&GroupMember, GroupError> {
+        todo!()
     }
 }

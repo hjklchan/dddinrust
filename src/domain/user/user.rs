@@ -1,15 +1,7 @@
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::domain::user::user::UserError::EmptyName;
-
-#[derive(Debug, Clone, Copy, Default)]
-pub enum Gender {
-    Famale,
-    Male,
-    #[default]
-    Mystery,
-}
+use crate::domain::user::{Gender, user::UserError::EmptyName};
 
 #[derive(Debug, thiserror::Error)]
 pub enum UserError {

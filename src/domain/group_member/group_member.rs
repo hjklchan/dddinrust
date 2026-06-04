@@ -1,4 +1,4 @@
-use std::slice::SliceIndex;
+#![allow(unused)]
 
 use crate::domain::group_member::{MemberRole, MemberStatus};
 use chrono::Utc;
@@ -29,6 +29,10 @@ impl GroupMember {
             status: MemberStatus::Normal,
             joined_time: chrono::Utc::now(),
         }
+    }
+
+    pub fn from_user(user_id: Uuid, nick_name: String, role: MemberRole) -> GroupMember {
+        GroupMember::new(user_id, nick_name, role)
     }
 }
 
