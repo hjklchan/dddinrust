@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 
-use crate::domain::shared::id::Id;
+use crate::domain::{group_member::GroupMember, shared::id::Id};
 
 pub struct Group {
     group_id: Id,
@@ -10,12 +12,15 @@ pub struct Group {
     created_at: chrono::DateTime<Utc>,
 
     num_of_group: i32,
+    members: HashMap<Id, GroupMember>,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum GroupDomainError {
     #[error("group name can not be empty")]
     EmptyGroupName,
+    #[error("can not join in this group, reason: {0}")]
+    UnableToJoinIn(&'static str),
 }
 
 impl Group {
@@ -25,6 +30,7 @@ impl Group {
         description: Option<String>,
         created_at: chrono::DateTime<Utc>,
         num_of_group: i32,
+        members: HashMap<Id, GroupMember>,
     ) -> Self {
         Self {
             group_id,
@@ -32,6 +38,7 @@ impl Group {
             description,
             created_at,
             num_of_group,
+            members,
         }
     }
 
@@ -43,6 +50,7 @@ impl Group {
         let group_id = Id::generate();
         let created_at = Utc::now();
         let num_of_group = 0;
+        let members = HashMap::new();
 
         Ok(Group {
             group_id,
@@ -50,6 +58,7 @@ impl Group {
             description,
             created_at,
             num_of_group,
+            members,
         })
     }
 
@@ -78,4 +87,10 @@ impl Group {
     }
 
     pub fn change_description(&mut self, value: String) {}
+
+    // pub fn invite_user_in_group(&mut self, user_id: Id, user_nick_name: String)
+
+    pub fn members(&self) -> &HashMap<Id, GroupMember> {
+        &self.members
+    }
 }

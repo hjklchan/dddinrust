@@ -5,7 +5,7 @@ use crate::domain::{group_member::group_role::GroupRole, shared::id::Id};
 #[derive(Debug)]
 pub struct GroupMember {
     group_member_id: Id,
-    group_id: Id,
+    // group_id: Id,
     user_id: Id,
 
     role: GroupRole,
@@ -28,7 +28,7 @@ pub enum GroupMemberDomainError {
 impl GroupMember {
     fn new(
         group_member_id: Id,
-        group_id: Id,
+        // group_id: Id,
         user_id: Id,
         group_alias: String,
         role: GroupRole,
@@ -36,8 +36,8 @@ impl GroupMember {
         joined_at: chrono::DateTime<Utc>,
     ) -> Self {
         Self {
-            group_member_id,
-            group_id,
+            group_member_id: group_member_id,
+            // group_id,
             user_id,
             group_alias,
             role,
@@ -46,16 +46,15 @@ impl GroupMember {
         }
     }
 
-    pub fn owner_in_group(group_id: Id, user_id: Id, mut group_alias: String) -> Self {
-        let id = Id::generate();
+    pub fn owner_in_group(user_id: Id, mut group_alias: String) -> Self {
+        let group_member_id = Id::generate();
         let is_muted = false;
         let joined_at = Utc::now();
         let role = GroupRole::Owner;
         // group_alias = group_alias.trim();
 
         Self::new(
-            id,
-            group_id,
+            group_member_id,
             user_id,
             group_alias,
             role,
@@ -73,7 +72,6 @@ impl GroupMember {
 
         Self {
             group_member_id,
-            group_id,
             user_id,
             group_alias,
             role,
