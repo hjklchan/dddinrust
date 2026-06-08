@@ -1,6 +1,6 @@
 pub mod date_of_birth;
 pub mod gender;
-mod repo;
+pub mod repo;
 pub mod status;
 mod user;
 mod user_id;

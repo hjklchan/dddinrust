@@ -1,3 +1,17 @@
-mod user_repo;
+use crate::domain::user::{User, UserId};
 
-pub use user_repo::UserRepo;
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("conflict user")]
+    UserConflict,
+    #[error("user not found")]
+    UserNotFound,
+}
+
+pub trait UserRepo {
+    fn create(&self, user: User) -> impl Future<Output = Result<(), Error>>;
+    fn delete_by_id(&self, user_id: UserId) -> impl Future<Output = Result<(), Error>>;
+    fn update(&self, user: User) -> impl Future<Output = Result<(), Error>>;
+    fn get_by_id(&self, user_id: UserId) -> impl Future<Output = Result<User, Error>>;
+    fn all(&self) -> impl Future<Output = Result<Vec<User>, Error>>;
+}

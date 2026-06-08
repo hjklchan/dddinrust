@@ -1,4 +1,4 @@
 mod group;
 mod group_member;
 mod shared;
-mod user;
+pub mod user;
