@@ -1,9 +1,9 @@
 use chrono::Utc;
 
-use crate::domain::group::group_id::GroupId;
+use crate::domain::shared::id::Id;
 
 pub struct Group {
-    id: GroupId,
+    group_id: Id,
 
     name: String,
     description: Option<String>,
@@ -20,14 +20,14 @@ pub enum GroupDomainError {
 
 impl Group {
     fn new(
-        id: GroupId,
+        group_id: Id,
         name: String,
         description: Option<String>,
         created_at: chrono::DateTime<Utc>,
         num_of_group: i32,
     ) -> Self {
         Self {
-            id,
+            group_id,
             name,
             description,
             created_at,
@@ -40,12 +40,12 @@ impl Group {
             return Err(GroupDomainError::EmptyGroupName);
         }
 
-        let id = GroupId::generate();
+        let group_id = Id::generate();
         let created_at = Utc::now();
         let num_of_group = 0;
 
         Ok(Group {
-            id,
+            group_id,
             name,
             description,
             created_at,
@@ -55,6 +55,10 @@ impl Group {
 
     pub fn name<'a>(&'a self) -> &'a str {
         &self.name
+    }
+
+    pub fn group_id(&self) -> Id {
+        self.group_id
     }
 
     pub fn description<'a>(&'a self) -> Option<&'a impl AsRef<str>> {
@@ -68,4 +72,10 @@ impl Group {
     pub fn num_of_group(&self) -> i32 {
         self.num_of_group
     }
+
+    pub fn change_name(&mut self, value: String) {
+        self.name = value;
+    }
+
+    pub fn change_description(&mut self, value: String) {}
 }

@@ -1,11 +1,12 @@
+use std::hash::Hash;
 use uuid::Uuid;
 
-#[derive(Debug, Eq, Clone, Copy)]
-pub struct GroupId {
+#[derive(Debug, Eq, Clone, Copy, Hash)]
+pub struct Id {
     value: Uuid,
 }
 
-impl GroupId {
+impl Id {
     pub fn new(value: Uuid) -> Self {
         Self { value: value }
     }
@@ -21,13 +22,13 @@ impl GroupId {
     }
 }
 
-impl From<Uuid> for GroupId {
+impl From<Uuid> for Id {
     fn from(value: Uuid) -> Self {
         Self::new(value)
     }
 }
 
-impl PartialEq for GroupId {
+impl PartialEq for Id {
     fn eq(&self, other: &Self) -> bool {
         return self.value == other.value;
     }

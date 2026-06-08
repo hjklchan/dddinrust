@@ -1,19 +1,12 @@
 use chrono::Utc;
 
-use crate::domain::{
-    group::group_id::{self, GroupId},
-    group_member::{
-        group_member_id::GroupMemberId,
-        group_role::{self, GroupRole},
-    },
-    user::UserId,
-};
+use crate::domain::{group_member::group_role::GroupRole, shared::id::Id};
 
 #[derive(Debug)]
 pub struct GroupMember {
-    id: GroupMemberId,
-    group_id: GroupId,
-    user_id: UserId,
+    group_member_id: Id,
+    group_id: Id,
+    user_id: Id,
 
     role: GroupRole,
     group_alias: String,
@@ -34,16 +27,16 @@ pub enum GroupMemberDomainError {
 
 impl GroupMember {
     fn new(
-        id: GroupMemberId,
-        group_id: GroupId,
-        user_id: UserId,
+        group_member_id: Id,
+        group_id: Id,
+        user_id: Id,
         group_alias: String,
         role: GroupRole,
         is_muted: bool,
         joined_at: chrono::DateTime<Utc>,
     ) -> Self {
         Self {
-            id,
+            group_member_id,
             group_id,
             user_id,
             group_alias,
@@ -53,8 +46,8 @@ impl GroupMember {
         }
     }
 
-    pub fn owner_in_group(group_id: GroupId, user_id: UserId, mut group_alias: String) -> Self {
-        let id = GroupMemberId::generate();
+    pub fn owner_in_group(group_id: Id, user_id: Id, mut group_alias: String) -> Self {
+        let id = Id::generate();
         let is_muted = false;
         let joined_at = Utc::now();
         let role = GroupRole::Owner;
@@ -72,14 +65,14 @@ impl GroupMember {
     }
 
     // 加入组
-    pub fn join_in_group(group_id: GroupId, user_id: UserId, group_alias: String) -> Self {
-        let id = GroupMemberId::generate();
+    pub fn join_in_group(group_id: Id, user_id: Id, group_alias: String) -> Self {
+        let group_member_id = Id::generate();
         let is_muted = false;
         let joined_at = Utc::now();
         let role = GroupRole::Member;
 
         Self {
-            id,
+            group_member_id,
             group_id,
             user_id,
             group_alias,
@@ -101,8 +94,8 @@ impl GroupMember {
         self.joined_at
     }
 
-    pub fn group_member_id(&self) -> GroupMemberId {
-        self.id
+    pub fn group_member_id(&self) -> Id {
+        self.group_member_id
     }
 
     pub fn change_group_alias(&mut self, value: String) -> Result<(), GroupMemberDomainError> {
