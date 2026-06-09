@@ -3,6 +3,9 @@ name = "dddinrust"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ["domain"]
+
 [dependencies]
 chrono = { version = "0.4.44", features = ["serde"] }
 thiserror = "2.0.18"
