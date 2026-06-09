@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-use chrono::Utc;
-
 use crate::domain::{group_member::GroupMember, shared::id::Id};
+use chrono::Utc;
+use std::collections::HashMap;
 
 pub struct Group {
     group_id: Id,
@@ -42,15 +40,25 @@ impl Group {
         }
     }
 
-    pub fn create(name: String, description: Option<String>) -> Result<Self, GroupDomainError> {
+    // create a new group and a member owns this group
+    pub fn create(
+        creator_id: Id,
+        creator_nick_name: String,
+        name: String,
+        description: Option<String>,
+    ) -> Result<Self, GroupDomainError> {
         if name.is_empty() {
             return Err(GroupDomainError::EmptyGroupName);
         }
 
+        let owner = GroupMember::owner_in_group(creator_id, creator_nick_name);
+
         let group_id = Id::generate();
         let created_at = Utc::now();
         let num_of_group = 0;
-        let members = HashMap::new();
+
+        let mut members = HashMap::new();
+        members.insert(creator_id, owner);
 
         Ok(Group {
             group_id,
@@ -92,5 +100,29 @@ impl Group {
 
     pub fn members(&self) -> &HashMap<Id, GroupMember> {
         &self.members
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::domain::group::Group;
+    use uuid::Uuid;
+
+    #[test]
+    fn test_create_a_new_group() {
+        let user_id = Uuid::new_v4();
+        let user_nick_name = "Lucaz";
+        println!("mock user: {} - {}", user_nick_name, user_id);
+
+        let group = Group::create(
+            user_id.into(),
+            user_nick_name.into(),
+            "PHP Development".into(),
+            None,
+        )
+        .unwrap();
+        println!("create a new group named: {}", group.name());
+
+        println!("group members: {:#?}", group.members());
     }
 }

@@ -1,3 +1,7 @@
+use dddinrust::domain::user::repo::UserRepo;
+
+use crate::repos::UserMemoryRepository;
+
 fn main() {}
 
 mod repos {

@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 pub mod date_of_birth;
 pub mod gender;
 pub mod repo;

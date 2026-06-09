@@ -1,6 +1,5 @@
-use chrono::Utc;
-
 use crate::domain::{group_member::group_role::GroupRole, shared::id::Id};
+use chrono::Utc;
 
 #[derive(Debug)]
 pub struct GroupMember {
@@ -23,6 +22,9 @@ pub enum GroupMemberDomainError {
 
     #[error("has already been muted")]
     HasAlreadyBeenMuted,
+
+    #[error("this member has been muted")]
+    HasBeenMuted,
 }
 
 impl GroupMember {
@@ -64,7 +66,7 @@ impl GroupMember {
     }
 
     // 加入组
-    pub fn join_in_group(group_id: Id, user_id: Id, group_alias: String) -> Self {
+    pub fn invite(group_id: Id, user_id: Id, group_alias: String) -> Self {
         let group_member_id = Id::generate();
         let is_muted = false;
         let joined_at = Utc::now();
@@ -112,5 +114,16 @@ impl GroupMember {
 
     pub fn apply_unmute(&mut self) {
         self.is_muted = false;
+    }
+
+    // 发送消息
+    pub fn send_message(&self, _to: &str, _message: &str) -> Result<(), GroupMemberDomainError> {
+        if self.is_muted() {
+            return Err(GroupMemberDomainError::HasBeenMuted);
+        }
+
+        println!("send message {} to {}", _message, _to);
+
+        Ok(())
     }
 }
