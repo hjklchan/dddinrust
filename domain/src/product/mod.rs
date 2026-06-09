@@ -83,4 +83,44 @@ impl<'a> Product<'a> {
     pub fn uom(&self) -> &'a str {
         self.uom
     }
+
+    pub fn update_unit_price(&mut self, value: f64) -> Result<(), ProductDomainError> {
+        if value < 0f64 {
+            return Err(ProductDomainError::NegativeUnitPrice);
+        }
+
+        self.unit_price = value;
+
+        Ok(())
+    }
+
+    pub fn update_name(&mut self, value: &'a str) -> Result<(), ProductDomainError> {
+        if self.name().is_empty() {
+            return Err(ProductDomainError::EmptyProructName);
+        }
+
+        self.name = value;
+
+        Ok(())
+    }
+
+    pub fn update_description(&mut self, value: &'a str) -> Result<(), ProductDomainError> {
+        if value.is_empty() {
+            return Err(ProductDomainError::EmptyProructDescription);
+        }
+
+        self.description = Some(value);
+
+        Ok(())
+    }
+
+    pub fn update_uom(&mut self, value: &'a str) -> Result<(), ProductDomainError> {
+        if value.is_empty() {
+            return Err(ProductDomainError::EmptyUom);
+        }
+
+        self.uom = value;
+
+        Ok(())
+    }
 }
