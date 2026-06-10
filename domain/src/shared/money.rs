@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 #[derive(Debug, Clone, Copy)]
 pub struct Money {
     cents: i64,
