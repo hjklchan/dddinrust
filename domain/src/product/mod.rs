@@ -1,11 +1,12 @@
-use crate::shared::identifier::Identifier;
+use crate::shared::{identifier::Identifier, money::Money};
 
+#[derive(Debug, Clone, Copy)]
 pub struct Product<'a> {
     product_id: Identifier,
 
     name: &'a str,
     description: Option<&'a str>,
-    unit_price: f64,
+    unit_price: Money,
     uom: &'a str,
 }
 
@@ -26,7 +27,7 @@ impl<'a> Product<'a> {
         product_id: Identifier,
         name: &'a str,
         description: Option<&'a str>,
-        unit_price: f64,
+        unit_price: Money,
         uom: &'a str,
     ) -> Self {
         Self {
@@ -41,7 +42,7 @@ impl<'a> Product<'a> {
     pub fn create(
         name: &'a str,
         description: Option<&'a str>,
-        unit_price: f64,
+        unit_price: Money,
         uom: &'a str,
     ) -> Result<Self, ProductDomainError> {
         if name.is_empty() {
@@ -51,9 +52,6 @@ impl<'a> Product<'a> {
             if desc.is_empty() {
                 return Err(ProductDomainError::EmptyProructName);
             }
-        }
-        if unit_price < 0f64 {
-            return Err(ProductDomainError::NegativeUnitPrice);
         }
         if uom.is_empty() {
             return Err(ProductDomainError::EmptyUom);
@@ -76,7 +74,7 @@ impl<'a> Product<'a> {
         self.description
     }
 
-    pub fn unit_price(&self) -> f64 {
+    pub fn unit_price(&self) -> Money {
         self.unit_price
     }
 
@@ -84,17 +82,11 @@ impl<'a> Product<'a> {
         self.uom
     }
 
-    pub fn update_unit_price(&mut self, value: f64) -> Result<(), ProductDomainError> {
-        if value < 0f64 {
-            return Err(ProductDomainError::NegativeUnitPrice);
-        }
-
+    pub fn update_unit_price(&mut self, value: Money) {
         self.unit_price = value;
-
-        Ok(())
     }
 
-    pub fn update_name(&mut self, value: &'a str) -> Result<(), ProductDomainError> {
+    pub fn rename(&mut self, value: &'a str) -> Result<(), ProductDomainError> {
         if self.name().is_empty() {
             return Err(ProductDomainError::EmptyProructName);
         }
@@ -122,5 +114,37 @@ impl<'a> Product<'a> {
         self.uom = value;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{product::Product, shared::money::Money};
+
+    #[test]
+    fn test_create_product() {
+        let price = Money::try_from_cents(10000).unwrap();
+        let product = Product::create("DDD in Rust", None, price, "本").unwrap();
+        println!("{:#?}", product);
+    }
+
+    #[test]
+    fn test_rename() {
+        let price = Money::try_from_cents(10000).unwrap();
+        let mut product = Product::create("DDD in Rust", None, price, "本").unwrap();
+        println!("before rename: {:#?}", product);
+
+        product.rename("Domain Driven Design in Rust").unwrap();
+        println!("after rename: {:#?}", product);
+    }
+
+    #[test]
+    fn test_update_unit_price() {
+        let price = Money::try_from_cents(10000).unwrap();
+        let mut product = Product::create("DDD in Rust", None, price, "本").unwrap();
+        println!("before update: {:?}", product.unit_price());
+
+        product.update_unit_price(Money::try_from_cents(999).unwrap());
+        println!("after update: {:?}", product.unit_price());
     }
 }
