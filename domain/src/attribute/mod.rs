@@ -1,4 +1,4 @@
-mod attribute_value;
+pub mod attribute_value;
 
 use crate::{attribute::attribute_value::AttributeValue, shared::identifier::Identifier};
 use std::collections::BTreeMap;
@@ -86,6 +86,13 @@ impl<'a> Attribute<'a> {
     pub fn remove_value(&mut self, value_id: Identifier) {
         self.values
             .retain(|_k, v| v.attribute_value_id() != value_id);
+    }
+
+    pub fn contain_value(&self, value: AttributeValue) -> bool {
+        self.values
+            .values()
+            .find(|rec| rec.attribute_value_id() == value.attribute_value_id())
+            .is_some()
     }
 
     pub fn values(&self) -> Vec<&'a str> {
