@@ -2,6 +2,10 @@ use chrono::Utc;
 
 fn main() {
     let mut user = User::new("lucas".to_owned(), Box::new(UnverifiedState));
+    let state = Box::new(UnverifiedState);
+    let state = state.verify(&mut user).unwrap();
+    let state = state.suspend(&mut user).unwrap();
+    let state = state.unsuspend(&mut user).unwrap();
 }
 
 struct User {
@@ -42,8 +46,10 @@ struct DeletedState;
 
 impl State for UnverifiedState {
     fn verify(self: Box<Self>, ctx: &mut User) -> Result<Box<dyn State>, &'static str> {
-        ctx.verified_at = Utc::now();
-
+        if ctx.verified_at.is_some() {
+            return Err("已经完成，无需再验证");
+        }
+        ctx.verified_at = Some(Utc::now());
         println!("验证完成，激活用户");
         Ok(Box::new(ActiveState))
     }

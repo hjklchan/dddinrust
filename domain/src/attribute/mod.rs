@@ -1,4 +1,5 @@
 pub mod attribute_value;
+pub mod repo;
 
 use crate::{attribute::attribute_value::AttributeValue, shared::identifier::Identifier};
 use std::collections::BTreeMap;
