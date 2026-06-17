@@ -12,24 +12,24 @@ pub enum TicketStateError {
     AlreadyInProgress,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct StateAssigningTransition {
     pub next_state: Box<dyn TicketState>,
 }
 
-pub trait TicketState: Debug + Clone {
+pub trait TicketState: Debug {
     fn assign(&self) -> Result<StateAssigningTransition, TicketStateError>;
     fn in_progress(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError>;
     fn resolve(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Created;
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Assigned;
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct InProgress;
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Resolved;
 
 impl TicketState for Created {
