@@ -1,206 +1,94 @@
-pub enum StateError {
-    AlreadyAssign,
-    AlreadyClosed,
-    AlreadyProcessing,
-    AlreadyCancelled,
-    InUnassigned,
+use std::fmt::Debug;
+
+#[derive(Debug, thiserror::Error)]
+pub enum TicketStateError {
+    #[error("unknown assignee")]
+    UnknownAssignee,
+    #[error("disallow reassign")]
+    DisallowReassign,
+    #[error("already resolved")]
+    AlreadyResolved,
+    #[error("already in progress")]
+    AlreadyInProgress,
 }
 
-pub trait State {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError>;
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError>;
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError>;
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError>;
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError>;
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError>;
+#[derive(Debug, Clone)]
+pub struct StateAssigningTransition {
+    pub next_state: Box<dyn TicketState>,
 }
 
-pub struct TicketCreated;
-pub struct TicketPending;
-pub struct TicketAssigned;
-pub struct TicketProcessing;
-pub struct TicketResolved;
-pub struct TicketClosed;
-pub struct TicketCancelled;
-
-impl State for TicketCreated {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        Ok(Box::new(TicketAssigned))
-    }
-
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        Err(StateError::InUnassigned)
-    }
-
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
+pub trait TicketState: Debug + Clone {
+    fn assign(&self) -> Result<StateAssigningTransition, TicketStateError>;
+    fn in_progress(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError>;
+    fn resolve(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError>;
 }
 
-impl State for TicketAssigned {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+#[derive(Debug, Clone)]
+pub struct Created;
+#[derive(Debug, Clone)]
+pub struct Assigned;
+#[derive(Debug, Clone)]
+pub struct InProgress;
+#[derive(Debug, Clone)]
+pub struct Resolved;
+
+impl TicketState for Created {
+    fn assign(&self) -> Result<StateAssigningTransition, TicketStateError> {
+        Ok(StateAssigningTransition {
+            next_state: Box::new(Assigned),
+        })
     }
 
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    fn in_progress(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Err(TicketStateError::UnknownAssignee)
     }
 
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    fn resolve(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Ok(Box::new(Resolved))
     }
 }
 
-impl State for TicketPending {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+impl TicketState for Assigned {
+    fn assign(&self) -> Result<StateAssigningTransition, TicketStateError> {
+        Err(TicketStateError::DisallowReassign)
     }
 
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    fn in_progress(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Ok(Box::new(InProgress))
     }
 
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    fn resolve(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Ok(Box::new(Resolved))
     }
 }
 
-impl State for TicketProcessing {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+impl TicketState for Resolved {
+    fn assign(&self) -> Result<StateAssigningTransition, TicketStateError> {
+        Err(TicketStateError::AlreadyResolved)
     }
 
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    // 重新处理 Ticket
+    fn in_progress(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Ok(Box::new(InProgress))
     }
 
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    fn resolve(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Err(TicketStateError::AlreadyResolved)
     }
 }
 
-impl State for TicketResolved {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+impl TicketState for InProgress {
+    fn assign(&self) -> Result<StateAssigningTransition, TicketStateError> {
+        Ok(StateAssigningTransition {
+            next_state: Box::new(InProgress),
+        })
     }
 
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    fn in_progress(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Err(TicketStateError::AlreadyInProgress)
     }
 
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-}
-
-impl State for TicketClosed {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-}
-
-impl State for TicketCancelled {
-    fn assign(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn process(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn transfer(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn resolve(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn close(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
-    }
-
-    fn cancel(self: Box<Self>) -> Result<Box<dyn State>, StateError> {
-        todo!()
+    fn resolve(self: Box<Self>) -> Result<Box<dyn TicketState>, TicketStateError> {
+        Ok(Box::new(Resolved))
     }
 }
